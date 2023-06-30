@@ -26,21 +26,25 @@ type CreateDIDResponse struct {
 }
 
 type PreLoginResponse struct {
-	DID     string `json:"did"`
-	Message string `json:"message"`
-	Updated string `json:"updated"`
+	DID          string `json:"did"`
+	Message      string `json:"message"`
+	RandomServer string `json:"random_server"`
+	Updated      string `json:"updated"`
 }
 
 type LoginIdentifier struct {
-	DID   string `json:"did"`
-	Token string `json:"token"`
+	DID     string `json:"did"`
+	Address string `json:"address"`
+	Message string `json:"message"`
+	Token   string `json:"token"`
 }
 
 type DIDLoginRequest struct {
-	Type       string          `json:"type"`
-	Updated    string          `json:"updated"`
-	Identifier LoginIdentifier `json:"identifier"`
-	DeviceId   string          `json:"device_id"`
+	Type         string          `json:"type"`
+	RandomServer string          `json:"random_server"`
+	Updated      string          `json:"updated"`
+	Identifier   LoginIdentifier `json:"identifier"`
+	DeviceId     string          `json:"device_id"`
 }
 
 type DIDLoginResponse struct {
@@ -51,7 +55,7 @@ type DIDLoginResponse struct {
 
 func GetDIDList(ctx context.Context, hostname, address string) ([]string, error) {
 	resByte, err := sendRequest("GET",
-		fmt.Sprintf("%v/_api/client/unstable/address/%v", hostname, address), "", nil)
+		fmt.Sprintf("%v/_api/client/v3/address/%v", hostname, address), "", nil)
 	if err != nil {
 		log.Errorf("room-state-test-case GetDIDList fail. err:%v", err.Error())
 		return nil, err
@@ -73,7 +77,7 @@ func CreateDID(ctx context.Context, hostname, address string) (*CreateDIDRespons
 		Address: address,
 	}
 	body, _ := json.Marshal(req)
-	resByte, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/unstable/did/create", hostname), "", body)
+	resByte, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/v3/did/create", hostname), "", body)
 	if err != nil {
 		log.Errorf("room-state-test-case CreateDID fail. err:%v", err.Error())
 		return nil, err
@@ -101,7 +105,7 @@ func SaveDID(ctx context.Context, hostname, did, signature, operation, address, 
 		Updated:   updated,
 	}
 	body, _ := json.Marshal(req)
-	_, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/unstable/did/%v", hostname, did), "", body)
+	_, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/v3/did/%v", hostname, did), "", body)
 	if err != nil {
 		log.Errorf("room-state-test-case SaveDID fail. err:%v", err.Error())
 		return err
@@ -110,10 +114,15 @@ func SaveDID(ctx context.Context, hostname, did, signature, operation, address, 
 	return nil
 }
 
-func PreLogin(ctx context.Context, hostname, did string) (*PreLoginResponse, error) {
-
-	body, _ := json.Marshal(struct{}{})
-	resByte, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/unstable/did/%v/pre_login", hostname, did), "", body)
+func PreLogin(ctx context.Context, hostname, address, did string) (*PreLoginResponse, error) {
+	req := make(map[string]string)
+	if len(did) > 0 {
+		req["did"] = did
+	} else {
+		req["address"] = address
+	}
+	body, _ := json.Marshal(req)
+	resByte, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/v3/did/pre_login1", hostname), "", body)
 	if err != nil {
 		log.Errorf("room-state-test-case PreLogin fail. err:%v", err.Error())
 		return nil, err
@@ -128,19 +137,22 @@ func PreLogin(ctx context.Context, hostname, did string) (*PreLoginResponse, err
 	return res, nil
 }
 
-func DIDLogin(ctx context.Context, hostname, loginType, updated, did, token, deviceId string) (*DIDLoginResponse, error) {
+func DIDLogin(ctx context.Context, hostname, address string, preLoginResp *PreLoginResponse, token, deviceId string) (*DIDLoginResponse, error) {
 
 	req := DIDLoginRequest{
-		Type:    loginType,
-		Updated: updated,
+		Type:         "m.login.did.identity",
+		RandomServer: preLoginResp.RandomServer,
+		Updated:      preLoginResp.Updated,
 		Identifier: LoginIdentifier{
-			DID:   did,
-			Token: token,
+			Address: address,
+			DID:     preLoginResp.DID,
+			Message: preLoginResp.Message,
+			Token:   token,
 		},
 		DeviceId: deviceId,
 	}
 	body, _ := json.Marshal(req)
-	resByte, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/unstable/did/login", hostname), "", body)
+	resByte, err := sendRequest("POST", fmt.Sprintf("%v/_api/client/v3/did/login", hostname), "", body)
 	if err != nil {
 		log.Errorf("room-state-test-case DIDLogin fail. err:%v", err.Error())
 		return nil, err
@@ -164,32 +176,16 @@ func Login(endpoint, address string, privateKey *ecdsa.PrivateKey) (accessToken,
 	}
 
 	did := ""
-	if len(didList) == 0 {
-		createDIDResponse, err := CreateDID(ctx, endpoint, address)
-		if err != nil {
-			return "", "", err
-		}
-
-		signature, _ := ethereumcrypto.Sign(accounts.TextHash([]byte(createDIDResponse.Message)), privateKey)
-		if err := SaveDID(
-			ctx, endpoint, createDIDResponse.DID, hexutil.Encode(signature),
-			"create", address, createDIDResponse.Updated); err != nil {
-			return "", "", err
-		}
-
-		did = createDIDResponse.DID
-	} else {
+	if len(didList) > 0 {
 		did = didList[0]
 	}
-
-	preLoginResponse, err := PreLogin(ctx, endpoint, did)
+	preLoginResponse, err := PreLogin(ctx, endpoint, address, did)
 	if err != nil {
 		return "", "", err
 	}
 
 	signature, _ := ethereumcrypto.Sign(accounts.TextHash([]byte(preLoginResponse.Message)), privateKey)
-	didLoginResponse, err := DIDLogin(ctx, endpoint, "m.login.did.identity", preLoginResponse.Updated,
-		did, hexutil.Encode(signature), "")
+	didLoginResponse, err := DIDLogin(ctx, endpoint, address, preLoginResponse, hexutil.Encode(signature), "")
 	if err != nil {
 		return "", "", err
 	}
