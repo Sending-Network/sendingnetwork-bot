@@ -33,8 +33,8 @@ type RespJoinedRooms struct {
 // RespJoinedMembers is the JSON response for JoinedMembers
 type RespJoinedMembers struct {
 	Joined map[string]struct {
-		DisplayName *string `json:"display_name"`
-		AvatarURL   *string `json:"avatar_url"`
+		DisplayName string `json:"display_name"`
+		AvatarURL   string `json:"avatar_url"`
 	} `json:"joined"`
 }
 
@@ -54,4 +54,49 @@ type RespCreateRoom struct {
 // RespUserDisplayName is the JSON response for GetDisplayName
 type RespUserDisplayName struct {
 	DisplayName string `json:"displayname"`
+}
+
+type RespCreateFilter struct {
+	FilterID string `json:"filter_id"`
+}
+
+// RespSync is the JSON response for sync
+type RespSync struct {
+	NextBatch   string `json:"next_batch"`
+	AccountData struct {
+		Events []Event `json:"events"`
+	} `json:"account_data"`
+	Presence struct {
+		Events []Event `json:"events"`
+	} `json:"presence"`
+	Rooms struct {
+		Leave map[string]struct {
+			State struct {
+				Events []Event `json:"events"`
+			} `json:"state"`
+			Timeline struct {
+				Events    []Event `json:"events"`
+				Limited   bool    `json:"limited"`
+				PrevBatch string  `json:"prev_batch"`
+			} `json:"timeline"`
+		} `json:"leave"`
+		Join map[string]struct {
+			State struct {
+				Events []Event `json:"events"`
+			} `json:"state"`
+			Timeline struct {
+				Events    []Event `json:"events"`
+				Limited   bool    `json:"limited"`
+				PrevBatch string  `json:"prev_batch"`
+			} `json:"timeline"`
+			Ephemeral struct {
+				Events []Event `json:"events"`
+			} `json:"ephemeral"`
+		} `json:"join"`
+		Invite map[string]struct {
+			State struct {
+				Events []Event
+			} `json:"invite_state"`
+		} `json:"invite"`
+	} `json:"rooms"`
 }

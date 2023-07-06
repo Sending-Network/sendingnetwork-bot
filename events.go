@@ -35,3 +35,55 @@ func (event *Event) MessageType() (msgtype string, ok bool) {
 	msgtype, ok = value.(string)
 	return
 }
+
+// TextMessage is the contents of a formatted message event.
+type TextMessage struct {
+	MsgType       string `json:"msgtype"`
+	Body          string `json:"body"`
+	FormattedBody string `json:"formatted_body"`
+	Format        string `json:"format"`
+}
+
+// VideoMessage is an m.video
+type VideoMessage struct {
+	MsgType string    `json:"msgtype"`
+	Body    string    `json:"body"`
+	URL     string    `json:"url"`
+	Info    VideoInfo `json:"info"`
+}
+
+// ImageMessage is an m.image event
+type ImageMessage struct {
+	MsgType string    `json:"msgtype"`
+	Body    string    `json:"body"`
+	URL     string    `json:"url"`
+	Info    ImageInfo `json:"info"`
+}
+
+// ImageInfo contains info about an image
+type ImageInfo struct {
+	Height        uint          `json:"h,omitempty"`
+	Width         uint          `json:"w,omitempty"`
+	Mimetype      string        `json:"mimetype,omitempty"`
+	Size          uint          `json:"size,omitempty"`
+	ThumbnailInfo ThumbnailInfo `json:"thumbnail_info,omitempty"`
+	ThumbnailURL  string        `json:"thumbnail_url,omitempty"`
+}
+
+// VideoInfo contains info about a video
+type VideoInfo struct {
+	Mimetype      string        `json:"mimetype,omitempty"`
+	ThumbnailInfo ThumbnailInfo `json:"thumbnail_info"`
+	ThumbnailURL  string        `json:"thumbnail_url,omitempty"`
+	Height        uint          `json:"h,omitempty"`
+	Width         uint          `json:"w,omitempty"`
+	Duration      uint          `json:"duration,omitempty"`
+	Size          uint          `json:"size,omitempty"`
+}
+
+type ThumbnailInfo struct {
+	Height   uint   `json:"h,omitempty"`
+	Width    uint   `json:"w,omitempty"`
+	Mimetype string `json:"mimetype,omitempty"`
+	Size     uint   `json:"size,omitempty"`
+}
