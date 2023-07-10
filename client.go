@@ -187,6 +187,13 @@ func txnID() string {
 	return "go" + strconv.FormatInt(time.Now().UnixNano(), 10)
 }
 
+// GetStateEvent get a state event from a room.
+func (cli *Client) GetStateEvent(roomID, eventType, stateKey string) (resp map[string]interface{}, err error) {
+	urlPath := cli.BuildURL("rooms", roomID, "state", eventType, stateKey)
+	err = cli.MakeRequest("GET", urlPath, nil, &resp)
+	return
+}
+
 // SendStateEvent sends a state event into a room.
 // contentJSON should be a pointer to something that can be encoded as JSON using json.Marshal.
 func (cli *Client) SendStateEvent(roomID, eventType, stateKey string, contentJSON interface{}) (resp *RespSendEvent, err error) {

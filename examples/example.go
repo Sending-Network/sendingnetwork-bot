@@ -125,5 +125,18 @@ func processCommand(client *sdnclient.Client, command string) {
 		} else {
 			fmt.Println(resp.EventID)
 		}
+	case "state":
+		roomId := parts[2]
+		eventType := parts[3]
+		stateKey := ""
+		if len(parts) >= 5 {
+			stateKey = parts[4]
+		}
+		resp, err := client.GetStateEvent(roomId, eventType, stateKey)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		} else {
+			fmt.Println(resp)
+		}
 	}
 }
