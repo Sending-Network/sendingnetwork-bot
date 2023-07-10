@@ -9,6 +9,8 @@ type ReqCreateRoom struct {
 	CreationContent map[string]interface{} `json:"creation_content,omitempty"`
 	InitialState    []Event                `json:"initial_state,omitempty"`
 	Preset          string                 `json:"preset,omitempty"`
+	Visibility      string                 `json:"visibility,omitempty"`
+	IsDirect        bool                   `json:"is_direct,omitempty"`
 }
 
 // ReqInvite3PID is the JSON request invite 3pid
