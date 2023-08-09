@@ -11,6 +11,7 @@ type ReqCreateRoom struct {
 	Preset          string                 `json:"preset,omitempty"`
 	Visibility      string                 `json:"visibility,omitempty"`
 	IsDirect        bool                   `json:"is_direct,omitempty"`
+	RoomVersion     string                 `json:"room_version,omitempty"`
 }
 
 // ReqInvite3PID is the JSON request invite 3pid
