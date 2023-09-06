@@ -100,3 +100,8 @@ type RespSync struct {
 		} `json:"invite"`
 	} `json:"rooms"`
 }
+
+type ChildRoomInfo struct {
+	RoomID string `json:"room_id"`
+	Name   string `json:"name"`
+}

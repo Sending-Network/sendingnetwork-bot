@@ -354,3 +354,17 @@ func (cli *Client) CreateFilter(filter json.RawMessage) (resp *RespCreateFilter,
 	err = cli.MakeRequest("POST", urlPath, &filter, &resp)
 	return
 }
+
+// PutRoomInSquad .
+func (cli *Client) PutRoomInSquad(squadID, roomID string, reqBody json.RawMessage) (resp *RespSendEvent, err error) {
+	urlPath := cli.BuildURL("oauth", "rooms", squadID, "state", "m.space.child", roomID)
+	err = cli.MakeRequest("PUT", urlPath, &reqBody, &resp)
+	return
+}
+
+// GetRoomsInSquad .
+func (cli *Client) GetRoomsInSquad(squadID string) (resp []ChildRoomInfo, err error) {
+	urlPath := cli.BuildURL("oauth", "rooms_in_squad", squadID)
+	err = cli.MakeRequest("GET", urlPath, nil, &resp)
+	return
+}
